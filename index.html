@@ -3,246 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heathrow Airport PTFS</title>
+    <title>Heathrow Airport - PTFS Edition</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
         
         :root {
-            --bg-color: #531F70;
+            --bg: #531F70;
+            --accent: #FF6600;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color);
+            background: var(--bg);
             color: white;
-            overflow-x: hidden;
         }
-        
         header {
-            background: rgba(0, 0, 0, 0.7);
-            position: fixed;
-            width: 100%;
+            background: rgba(0,0,0,0.9);
+            position: sticky;
+            top: 0;
             z-index: 1000;
-            padding: 1rem 5%;
+            padding: 15px 5%;
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #FF6600;
+            border-bottom: 4px solid var(--accent);
         }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .logo img {
-            height: 60px;
-        }
-        
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 30px;
-        }
-        
-        nav a {
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            transition: color 0.3s;
-        }
-        
-        nav a:hover {
-            color: #FF6600;
-        }
+        .logo-container img { height: 55px; }
+        nav ul { display: flex; list-style: none; gap: 25px; }
+        nav a { color: white; text-decoration: none; font-weight: 500; }
+        nav a:hover { color: var(--accent); }
         
         .hero {
-            height: 100vh;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://source.unsplash.com/random/1920x1080/?airport,heathrow') center/cover no-repeat;
+            height: 85vh;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url('https://picsum.photos/id/1015/1920/1080') center/cover;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
-            position: relative;
         }
+        .hero-content h1 { font-size: 3.8rem; margin-bottom: 15px; }
         
-        .hero-content {
-            max-width: 800px;
-            padding: 2rem;
-        }
-        
-        .hero h1 {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
-        }
-        
-        .hero p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .btn {
-            display: inline-block;
-            background: #FF6600;
-            color: white;
-            padding: 15px 40px;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 700;
-            transition: transform 0.3s;
-        }
-        
-        .btn:hover {
-            transform: scale(1.05);
-        }
-        
-        section {
-            padding: 100px 5%;
-        }
-        
-        h2 {
-            font-size: 3rem;
-            text-align: center;
-            margin-bottom: 3rem;
-            color: #FFCC00;
-        }
+        section { padding: 80px 5%; }
+        h2 { text-align: center; font-size: 2.8rem; margin-bottom: 40px; color: #FFCC00; }
         
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
         }
-        
         .card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s;
-        }
-        
-        .card:hover {
-            transform: translateY(-10px);
-        }
-        
-        .card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        
-        .card-content {
-            padding: 20px;
-        }
-        
-        /* Map Section */
-        #map-container {
-            height: 600px;
-            background: #112233;
-            border-radius: 15px;
-            position: relative;
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
             overflow: hidden;
         }
+        .card img { width: 100%; height: 220px; object-fit: cover; }
         
-        .world-map {
+        .flights-table {
             width: 100%;
-            height: 100%;
-            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg') center/cover;
-            filter: brightness(0.7);
+            border-collapse: collapse;
+            background: rgba(0,0,0,0.4);
         }
+        .flights-table th, .flights-table td { padding: 16px; text-align: left; border-bottom: 1px solid rgba(255,102,0,0.3); }
+        .flights-table th { background: #2a1b3d; }
         
-        .flight-dot {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            background: #FF6600;
-            border-radius: 50%;
-            box-shadow: 0 0 15px #FFCC00;
-            animation: pulse 2s infinite;
-        }
+        #map { height: 650px; border-radius: 12px; }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); }
-            100% { transform: scale(1); }
-        }
-        
-        /* Admin Panel */
         #admin-panel {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            padding: 40px;
-            overflow-y: auto;
-        }
-        
-        .admin-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: #2a1b3d;
+            inset: 0;
+            background: rgba(0,0,0,0.97);
+            z-index: 9999;
             padding: 30px;
-            border-radius: 15px;
+            overflow: auto;
         }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #FF6600;
-        }
-        
-        input, select, button {
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            border: none;
-        }
-        
-        .tab {
-            display: none;
-        }
-        
-        .tab.active {
-            display: block;
-        }
-        
         .invisible-btn {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: transparent;
+            bottom: 25px;
+            right: 25px;
+            width: 55px;
+            height: 55px;
+            background: rgba(255,102,0,0.2);
             border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
             cursor: pointer;
-            z-index: 9999;
-            opacity: 0;
+            z-index: 99999;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header>
-        <div class="logo">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Heathrow_Airport_Logo.svg/2560px-Heathrow_Airport_Logo.svg.png" alt="Heathrow Logo" onerror="this.src='https://via.placeholder.com/200x60/531F70/FFFFFF?text=HEATHROW';">
-            <h2>Heathrow PTFS</h2>
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Heathrow_Airport_Logo.svg/2560px-Heathrow_Airport_Logo.svg.png" alt="Heathrow">
+            <h1 style="font-size:1.8rem;">Heathrow PTFS</h1>
         </div>
         <nav>
             <ul>
@@ -254,332 +112,212 @@
         </nav>
     </header>
 
-    <!-- HOME PAGE -->
     <section id="home" class="hero">
         <div class="hero-content">
             <h1>Welcome to Heathrow Airport</h1>
-            <p>Pilot Training Flight Simulator • Roblox Edition</p>
-            <a href="#" onclick="navigateTo('departures')" class="btn">Live Departures</a>
-            <p style="margin-top: 40px; font-size: 1.1rem;">Terminal 5 • London, UK</p>
+            <p>London's Global Hub • PTFS Roblox Edition</p>
+            <button onclick="navigateTo('departures')" class="btn" style="background:var(--accent);padding:14px 35px;border:none;border-radius:50px;font-size:1.1rem;">Live Departures</button>
         </div>
     </section>
 
-    <!-- AIRLINES PAGE -->
-    <section id="airlines" class="tab">
-        <h2>Airlines Operating at Heathrow PTFS</h2>
-        <div class="card-grid" id="airlines-grid">
-            <!-- Populated by JS -->
-        </div>
+    <section id="airlines" style="display:none;">
+        <h2>Airlines at Heathrow PTFS</h2>
+        <div class="card-grid" id="airlines-grid"></div>
     </section>
 
-    <!-- DEPARTURES PAGE -->
-    <section id="departures" class="tab">
-        <h2>Live Departures</h2>
-        <table id="departures-table">
-            <thead>
-                <tr>
-                    <th>Flight</th>
-                    <th>Airline</th>
-                    <th>Destination</th>
-                    <th>Time</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="departures-body">
-                <!-- Populated by JS -->
-            </tbody>
+    <section id="departures" style="display:none;">
+        <h2>Live Departures • Terminal 5</h2>
+        <table class="flights-table" id="departures-table">
+            <thead><tr><th>Flight</th><th>Airline</th><th>Destination</th><th>Time</th><th>Gate</th><th>Status</th></tr></thead>
+            <tbody id="departures-body"></tbody>
         </table>
     </section>
 
-    <!-- WHERE WE FLY PAGE -->
-    <section id="wherewefly" class="tab">
-        <h2>Where We Fly</h2>
-        <div id="map-container">
-            <div class="world-map"></div>
-            <!-- Flight dots added by JS -->
-        </div>
-        <p style="text-align: center; margin-top: 20px;">Interactive Route Map • Drag to explore major PTFS hubs</p>
+    <section id="wherewefly" style="display:none;">
+        <h2>Interactive Route Map - Click Markers to See Airlines & Flights</h2>
+        <div id="map"></div>
     </section>
 
-    <!-- ADMIN INVISIBLE BUTTON -->
-    <button class="invisible-btn" onclick="showAdmin()" id="admin-trigger"></button>
+    <button class="invisible-btn" onclick="showAdmin()" title="Admin Panel">⚙️</button>
 
-    <!-- ADMIN PANEL -->
     <div id="admin-panel">
-        <div class="admin-content">
-            <h2 style="color: #FFCC00;">Heathrow PTFS Admin Panel</h2>
-            <button onclick="hideAdmin()" style="float:right; background:#FF6600; color:white;">Close Admin</button>
+        <div style="max-width:1100px;margin:0 auto;background:#2a1b3d;padding:30px;border-radius:12px;">
+            <h2 style="color:#FFCC00;">Admin Panel</h2>
+            <button onclick="hideAdmin()" style="float:right;background:#FF6600;padding:10px 20px;">Close</button>
+            <button onclick="switchTab(0)" class="btn" style="margin:10px;">Airlines</button>
+            <button onclick="switchTab(1)" class="btn" style="margin:10px;">Flights</button>
             
-            <div style="margin: 20px 0;">
-                <button onclick="switchAdminTab(0)" class="btn">Manage Airlines</button>
-                <button onclick="switchAdminTab(1)" class="btn">Manage Flights</button>
+            <div id="admin-tab-0">
+                <h3>Add Airline</h3>
+                <input type="text" id="a-name" placeholder="Airline Name">
+                <input type="text" id="a-discord" placeholder="Discord Link">
+                <input type="file" id="a-logo" accept="image/*">
+                <button onclick="addAirline()" class="btn">Add</button>
+                <table id="admin-airlines-table" style="width:100%;margin-top:20px;"></table>
             </div>
             
-            <!-- Airlines Tab -->
-            <div id="admin-airlines" class="tab active">
-                <h3>Airlines Management</h3>
-                <input type="text" id="airline-name" placeholder="Airline Name">
-                <input type="text" id="discord-link" placeholder="Discord Server Link">
-                <input type="file" id="airline-logo" accept="image/*">
-                <button onclick="addAirline()">Add Airline</button>
-                
-                <table id="admin-airlines-table">
-                    <thead>
-                        <tr><th>Logo</th><th>Name</th><th>Discord</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody id="admin-airlines-body"></tbody>
-                </table>
-            </div>
-            
-            <!-- Flights Tab -->
-            <div id="admin-flights" class="tab">
-                <h3>Flights Management</h3>
-                <input type="text" id="flight-num" placeholder="Flight Number (e.g. BA123)">
-                <input type="text" id="flight-dest" placeholder="Destination">
-                <input type="text" id="flight-time" placeholder="Departure Time">
-                <select id="flight-status">
-                    <option value="On Time">On Time</option>
-                    <option value="Delayed">Delayed</option>
-                    <option value="Cancelled">Cancelled</option>
-                </select>
-                <button onclick="addFlight()">Create Flight</button>
-                
-                <table id="admin-flights-table">
-                    <thead>
-                        <tr><th>Flight</th><th>Dest</th><th>Time</th><th>Status</th><th>Actions</th></tr>
-                    </thead>
-                    <tbody id="admin-flights-body"></tbody>
-                </table>
+            <div id="admin-tab-1" style="display:none;">
+                <h3>Add Flight</h3>
+                <input type="text" id="f-num" placeholder="Flight No">
+                <input type="text" id="f-dest" placeholder="Destination">
+                <input type="text" id="f-time" placeholder="Time">
+                <select id="f-status"><option>On Time</option><option>Delayed</option><option>Cancelled</option></select>
+                <button onclick="addFlight()" class="btn">Create</button>
+                <table id="admin-flights-table" style="width:100%;margin-top:20px;"></table>
             </div>
         </div>
     </div>
 
-    <footer style="background:#2a1b3d; padding:40px; text-align:center;">
-        <p>&copy; 2026 Heathrow Airport PTFS • Fan Site for Roblox Pilot Training Flight Simulator</p>
-        <p>Admin Access: Visit /admin after loading the site</p>
+    <footer style="background:#1a1128;padding:40px;text-align:center;">
+        <p>© 2026 Heathrow PTFS • Roblox Fan Project</p>
     </footer>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Sample data
         let airlines = [
-            { id: 1, name: "British Airways", discord: "https://discord.gg/ba-ptfs", logo: "https://via.placeholder.com/80x80/003087/FFFFFF?text=BA" },
-            { id: 2, name: "Virgin Atlantic", discord: "https://discord.gg/virgin-ptfs", logo: "https://via.placeholder.com/80x80/FF0000/FFFFFF?text=VS" }
+            { name: "British Airways", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/British_Airways_Logo.svg/2560px-British_Airways_Logo.svg.png", discord: "https://discord.gg/exampleba" },
+            { name: "Ryanair", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Ryanair_Logo.svg/2560px-Ryanair_Logo.svg.png", discord: "https://discord.gg/exampleryan" },
+            { name: "Virgin Atlantic", logo: "https://via.placeholder.com/180x60/ff0000/fff?text=Virgin", discord: "#" }
         ];
         
         let flights = [
-            { id: 1, num: "BA112", airline: "British Airways", dest: "New York (JFK)", time: "14:45", status: "On Time" },
-            { id: 2, num: "VS304", airline: "Virgin Atlantic", dest: "Los Angeles (LAX)", time: "16:20", status: "Delayed" }
+            { num: "BA112", airline: "British Airways", dest: "New York (JFK)", time: "14:45", gate: "A12", status: "On Time", lat: 40.6413, lng: -73.7781 },
+            { num: "FR456", airline: "Ryanair", dest: "Dublin (DUB)", time: "15:20", gate: "B8", status: "On Time", lat: 53.4213, lng: -6.2701 },
+            { num: "VS304", airline: "Virgin Atlantic", dest: "Los Angeles (LAX)", time: "16:10", gate: "C5", status: "Delayed", lat: 33.9416, lng: -118.4085 }
         ];
         
-        // Navigation
-        function navigateTo(page) {
-            document.querySelectorAll('.tab').forEach(tab => tab.style.display = 'none');
-            document.getElementById(page).style.display = 'block';
+        let map, markers = [];
+        
+        function initMap() {
+            map = L.map('map').setView([51.47, -0.45], 4);
             
-            if (page === 'airlines') renderAirlines();
-            if (page === 'departures') renderDepartures();
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+            
+            L.marker([51.47, -0.45]).addTo(map)
+                .bindPopup('<b>Heathrow Airport (LHR)</b><br>London, UK<br><i>PTFS Hub</i>');
+            
+            updateMapMarkers();
         }
         
-        // Render Airlines
+        function updateMapMarkers() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            
+            flights.forEach(f => {
+                const marker = L.marker([f.lat, f.lng]).addTo(map)
+                    .bindPopup(`
+                        <b>${f.dest}</b><br>
+                        Flight: ${f.num}<br>
+                        Airline: ${f.airline}<br>
+                        Time: ${f.time}<br>
+                        Status: <span style="color:${f.status==='On Time' ? 'lime' : 'orange'}">${f.status}</span>
+                    `);
+                markers.push(marker);
+            });
+        }
+        
+        function navigateTo(page) {
+            document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+            document.getElementById(page).style.display = 'block';
+            if (page === 'airlines') renderAirlines();
+            if (page === 'departures') renderDepartures();
+            if (page === 'wherewefly') setTimeout(() => map.invalidateSize(), 300);
+        }
+        
         function renderAirlines() {
             const grid = document.getElementById('airlines-grid');
             grid.innerHTML = '';
-            airlines.forEach(airline => {
+            airlines.forEach(air => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
-                    <img src="${airline.logo}" alt="${airline.name}">
-                    <div class="card-content">
-                        <h3>${airline.name}</h3>
-                        <a href="${airline.discord}" target="_blank" class="btn" style="font-size:0.9rem; padding:8px 20px;">Join Discord</a>
+                    <img src="${air.logo}" alt="${air.name}">
+                    <div style="padding:20px">
+                        <h3>${air.name}</h3>
+                        <a href="${air.discord}" target="_blank" style="color:#FFCC00">Discord →</a>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
         
-        // Render Departures
         function renderDepartures() {
             const tbody = document.getElementById('departures-body');
             tbody.innerHTML = '';
-            flights.forEach(flight => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${flight.num}</td>
-                    <td>${flight.airline}</td>
-                    <td>${flight.dest}</td>
-                    <td>${flight.time}</td>
-                    <td style="color: ${flight.status === 'On Time' ? '#0f0' : '#f80'};">${flight.status}</td>
-                `;
-                tbody.appendChild(row);
+            flights.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${f.num}</td><td>${f.airline}</td><td>${f.dest}</td><td>${f.time}</td><td>${f.gate}</td><td style="color:${f.status==='On Time'?'lime':'orange'}">${f.status}</td>`;
+                tbody.appendChild(tr);
             });
         }
         
-        // Fake Map
-        function initMap() {
-            const map = document.querySelector('.world-map');
-            const dots = [
-                {left: '35%', top: '40%'}, // London
-                {left: '15%', top: '55%'}, // NYC
-                {left: '70%', top: '45%'}, // Asia
-                {left: '25%', top: '70%'}  // Africa
-            ];
+        function showAdmin() { 
+            document.getElementById('admin-panel').style.display = 'block'; 
+            renderAdmin(); 
+        }
+        function hideAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
+        
+        function switchTab(n) {
+            document.getElementById('admin-tab-0').style.display = n===0 ? 'block' : 'none';
+            document.getElementById('admin-tab-1').style.display = n===1 ? 'block' : 'none';
+        }
+        
+        function renderAdmin() {
+            let html = `<tr><th>Logo</th><th>Name</th><th>Action</th></tr>`;
+            airlines.forEach((a,i) => html += `<tr><td><img src="${a.logo}" width="60"></td><td>${a.name}</td><td><button onclick="deleteAirline(${i})">Delete</button></td></tr>`);
+            document.getElementById('admin-airlines-table').innerHTML = html;
             
-            dots.forEach(dot => {
-                const d = document.createElement('div');
-                d.className = 'flight-dot';
-                d.style.left = dot.left;
-                d.style.top = dot.top;
-                map.appendChild(d);
-            });
-        }
-        
-        // Admin
-        function showAdmin() {
-            document.getElementById('admin-panel').style.display = 'block';
-            renderAdminAirlines();
-            renderAdminFlights();
-        }
-        
-        function hideAdmin() {
-            document.getElementById('admin-panel').style.display = 'none';
-        }
-        
-        function switchAdminTab(n) {
-            document.querySelectorAll('#admin-airlines, #admin-flights').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('#admin-airlines, #admin-flights')[n].classList.add('active');
-        }
-        
-        function renderAdminAirlines() {
-            const tbody = document.getElementById('admin-airlines-body');
-            tbody.innerHTML = '';
-            airlines.forEach((airline, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><img src="${airline.logo}" width="50"></td>
-                    <td>${airline.name}</td>
-                    <td><a href="${airline.discord}" target="_blank">${airline.discord}</a></td>
-                    <td>
-                        <button onclick="deleteAirline(${index})">Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            html = `<tr><th>Flight</th><th>Dest</th><th>Action</th></tr>`;
+            flights.forEach((f,i) => html += `<tr><td>${f.num}</td><td>${f.dest}</td><td><button onclick="deleteFlight(${i})">Delete</button></td></tr>`);
+            document.getElementById('admin-flights-table').innerHTML = html;
         }
         
         function addAirline() {
-            const name = document.getElementById('airline-name').value;
-            const discord = document.getElementById('discord-link').value;
-            const fileInput = document.getElementById('airline-logo');
-            
-            if (!name) return alert("Airline name required");
-            
-            let logoUrl = 'https://via.placeholder.com/80x80/531F70/FFFFFF?text=' + name.substring(0,2);
-            
-            if (fileInput.files.length > 0) {
+            const name = document.getElementById('a-name').value;
+            if (!name) return alert('Name required');
+            const file = document.getElementById('a-logo').files[0];
+            if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    logoUrl = e.target.result;
-                    airlines.push({id: Date.now(), name, discord: discord || '#', logo: logoUrl});
-                    renderAdminAirlines();
+                reader.onload = e => {
+                    airlines.push({name, logo: e.target.result, discord: document.getElementById('a-discord').value || '#'});
                     renderAirlines();
+                    renderAdmin();
                 };
-                reader.readAsDataURL(fileInput.files[0]);
+                reader.readAsDataURL(file);
             } else {
-                airlines.push({id: Date.now(), name, discord: discord || '#', logo: logoUrl});
-                renderAdminAirlines();
+                airlines.push({name, logo: `https://via.placeholder.com/180x60/531F70/fff?text=${name[0]}`, discord: '#'});
                 renderAirlines();
-            }
-            
-            document.getElementById('airline-name').value = '';
-            document.getElementById('discord-link').value = '';
-        }
-        
-        function deleteAirline(index) {
-            if (confirm('Delete airline?')) {
-                airlines.splice(index, 1);
-                renderAdminAirlines();
-                renderAirlines();
+                renderAdmin();
             }
         }
         
-        function renderAdminFlights() {
-            const tbody = document.getElementById('admin-flights-body');
-            tbody.innerHTML = '';
-            flights.forEach((flight, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${flight.num}</td>
-                    <td>${flight.dest}</td>
-                    <td>${flight.time}</td>
-                    <td>${flight.status}</td>
-                    <td>
-                        <button onclick="deleteFlight(${index})">Delete</button>
-                        <button onclick="toggleDelay(${index})">Delay/Cancel</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+        function deleteAirline(i) {
+            if (confirm('Delete?')) { airlines.splice(i,1); renderAirlines(); renderAdmin(); }
         }
         
         function addFlight() {
-            const num = document.getElementById('flight-num').value;
-            const dest = document.getElementById('flight-dest').value;
-            const time = document.getElementById('flight-time').value;
-            const status = document.getElementById('flight-status').value;
-            
-            if (!num || !dest) return alert("Flight details required");
-            
+            const num = document.getElementById('f-num').value;
+            const dest = document.getElementById('f-dest').value;
+            if (!num || !dest) return alert('Details required');
             flights.push({
-                id: Date.now(),
-                num,
-                airline: "Custom",
-                dest,
-                time: time || "00:00",
-                status
+                num, airline: "Custom", dest, time: document.getElementById('f-time').value || "00:00",
+                gate: "T5", status: document.getElementById('f-status').value,
+                lat: 40 + Math.random()*20, lng: -80 + Math.random()*100
             });
-            
-            renderAdminFlights();
             renderDepartures();
+            updateMapMarkers();
+            renderAdmin();
         }
         
-        function deleteFlight(index) {
-            if (confirm('Delete flight?')) {
-                flights.splice(index, 1);
-                renderAdminFlights();
-                renderDepartures();
-            }
+        function deleteFlight(i) {
+            if (confirm('Delete?')) { flights.splice(i,1); renderDepartures(); updateMapMarkers(); renderAdmin(); }
         }
         
-        function toggleDelay(index) {
-            const statuses = ['On Time', 'Delayed', 'Cancelled'];
-            let current = flights[index].status;
-            let nextIndex = (statuses.indexOf(current) + 1) % 3;
-            flights[index].status = statuses[nextIndex];
-            renderAdminFlights();
-            renderDepartures();
-        }
-        
-        // Keyboard shortcut for admin (demo)
-        document.addEventListener('keydown', function(e) {
-            if (e.key === '/' && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
-                showAdmin();
-            }
-        });
-        
-        // Init
-        window.onload = function() {
+        window.onload = () => {
             navigateTo('home');
             initMap();
-            renderAirlines();
-            renderDepartures();
-            
-            // Make invisible button visible after 3s for demo
-            setTimeout(() => {
-                document.getElementById('admin-trigger').style.opacity = '0.1';
-            }, 3000);
-            
-            console.log('%cHeathrow PTFS Admin ready. Type / or visit /admin in URL (demo)', 'color:#FFCC00; font-size:16px');
         };
     </script>
 </body>
