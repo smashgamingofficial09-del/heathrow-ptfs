@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heathrow Airport PTFS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        
+        :root {
+            --bg-color: #531F70;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #FF6600;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo img {
+            height: 60px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: #FF6600;
+        }
+        
+        .hero {
+            height: 100vh;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://source.unsplash.com/random/1920x1080/?airport,heathrow') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            padding: 2rem;
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: #FF6600;
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        section {
+            padding: 100px 5%;
+        }
+        
+        h2 {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #FFCC00;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .card-content {
+            padding: 20px;
+        }
+        
+        /* Map Section */
+        #map-container {
+            height: 600px;
+            background: #112233;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .world-map {
+            width: 100%;
+            height: 100%;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Equirectangular_projection_SW.jpg/1280px-Equirectangular_projection_SW.jpg') center/cover;
+            filter: brightness(0.7);
+        }
+        
+        .flight-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #FF6600;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #FFCC00;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Admin Panel */
+        #admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        
+        .admin-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #2a1b3d;
+            padding: 30px;
+            border-radius: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #FF6600;
+        }
+        
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+        
+        .tab {
+            display: none;
+        }
+        
+        .tab.active {
+            display: block;
+        }
+        
+        .invisible-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 9999;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Heathrow_Airport_Logo.svg/2560px-Heathrow_Airport_Logo.svg.png" alt="Heathrow Logo" onerror="this.src='https://via.placeholder.com/200x60/531F70/FFFFFF?text=HEATHROW';">
+            <h2>Heathrow PTFS</h2>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" onclick="navigateTo('home')">Home</a></li>
+                <li><a href="#" onclick="navigateTo('airlines')">Airlines</a></li>
+                <li><a href="#" onclick="navigateTo('departures')">Departures</a></li>
+                <li><a href="#" onclick="navigateTo('wherewefly')">Where We Fly</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- HOME PAGE -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Welcome to Heathrow Airport</h1>
+            <p>Pilot Training Flight Simulator • Roblox Edition</p>
+            <a href="#" onclick="navigateTo('departures')" class="btn">Live Departures</a>
+            <p style="margin-top: 40px; font-size: 1.1rem;">Terminal 5 • London, UK</p>
+        </div>
+    </section>
+
+    <!-- AIRLINES PAGE -->
+    <section id="airlines" class="tab">
+        <h2>Airlines Operating at Heathrow PTFS</h2>
+        <div class="card-grid" id="airlines-grid">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- DEPARTURES PAGE -->
+    <section id="departures" class="tab">
+        <h2>Live Departures</h2>
+        <table id="departures-table">
+            <thead>
+                <tr>
+                    <th>Flight</th>
+                    <th>Airline</th>
+                    <th>Destination</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="departures-body">
+                <!-- Populated by JS -->
+            </tbody>
+        </table>
+    </section>
+
+    <!-- WHERE WE FLY PAGE -->
+    <section id="wherewefly" class="tab">
+        <h2>Where We Fly</h2>
+        <div id="map-container">
+            <div class="world-map"></div>
+            <!-- Flight dots added by JS -->
+        </div>
+        <p style="text-align: center; margin-top: 20px;">Interactive Route Map • Drag to explore major PTFS hubs</p>
+    </section>
+
+    <!-- ADMIN INVISIBLE BUTTON -->
+    <button class="invisible-btn" onclick="showAdmin()" id="admin-trigger"></button>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel">
+        <div class="admin-content">
+            <h2 style="color: #FFCC00;">Heathrow PTFS Admin Panel</h2>
+            <button onclick="hideAdmin()" style="float:right; background:#FF6600; color:white;">Close Admin</button>
+            
+            <div style="margin: 20px 0;">
+                <button onclick="switchAdminTab(0)" class="btn">Manage Airlines</button>
+                <button onclick="switchAdminTab(1)" class="btn">Manage Flights</button>
+            </div>
+            
+            <!-- Airlines Tab -->
+            <div id="admin-airlines" class="tab active">
+                <h3>Airlines Management</h3>
+                <input type="text" id="airline-name" placeholder="Airline Name">
+                <input type="text" id="discord-link" placeholder="Discord Server Link">
+                <input type="file" id="airline-logo" accept="image/*">
+                <button onclick="addAirline()">Add Airline</button>
+                
+                <table id="admin-airlines-table">
+                    <thead>
+                        <tr><th>Logo</th><th>Name</th><th>Discord</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-airlines-body"></tbody>
+                </table>
+            </div>
+            
+            <!-- Flights Tab -->
+            <div id="admin-flights" class="tab">
+                <h3>Flights Management</h3>
+                <input type="text" id="flight-num" placeholder="Flight Number (e.g. BA123)">
+                <input type="text" id="flight-dest" placeholder="Destination">
+                <input type="text" id="flight-time" placeholder="Departure Time">
+                <select id="flight-status">
+                    <option value="On Time">On Time</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+                <button onclick="addFlight()">Create Flight</button>
+                
+                <table id="admin-flights-table">
+                    <thead>
+                        <tr><th>Flight</th><th>Dest</th><th>Time</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="admin-flights-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer style="background:#2a1b3d; padding:40px; text-align:center;">
+        <p>&copy; 2026 Heathrow Airport PTFS • Fan Site for Roblox Pilot Training Flight Simulator</p>
+        <p>Admin Access: Visit /admin after loading the site</p>
+    </footer>
+
+    <script>
+        // Sample data
+        let airlines = [
+            { id: 1, name: "British Airways", discord: "https://discord.gg/ba-ptfs", logo: "https://via.placeholder.com/80x80/003087/FFFFFF?text=BA" },
+            { id: 2, name: "Virgin Atlantic", discord: "https://discord.gg/virgin-ptfs", logo: "https://via.placeholder.com/80x80/FF0000/FFFFFF?text=VS" }
+        ];
+        
+        let flights = [
+            { id: 1, num: "BA112", airline: "British Airways", dest: "New York (JFK)", time: "14:45", status: "On Time" },
+            { id: 2, num: "VS304", airline: "Virgin Atlantic", dest: "Los Angeles (LAX)", time: "16:20", status: "Delayed" }
+        ];
+        
+        // Navigation
+        function navigateTo(page) {
+            document.querySelectorAll('.tab').forEach(tab => tab.style.display = 'none');
+            document.getElementById(page).style.display = 'block';
+            
+            if (page === 'airlines') renderAirlines();
+            if (page === 'departures') renderDepartures();
+        }
+        
+        // Render Airlines
+        function renderAirlines() {
+            const grid = document.getElementById('airlines-grid');
+            grid.innerHTML = '';
+            airlines.forEach(airline => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${airline.logo}" alt="${airline.name}">
+                    <div class="card-content">
+                        <h3>${airline.name}</h3>
+                        <a href="${airline.discord}" target="_blank" class="btn" style="font-size:0.9rem; padding:8px 20px;">Join Discord</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+        
+        // Render Departures
+        function renderDepartures() {
+            const tbody = document.getElementById('departures-body');
+            tbody.innerHTML = '';
+            flights.forEach(flight => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${flight.num}</td>
+                    <td>${flight.airline}</td>
+                    <td>${flight.dest}</td>
+                    <td>${flight.time}</td>
+                    <td style="color: ${flight.status === 'On Time' ? '#0f0' : '#f80'};">${flight.status}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Fake Map
+        function initMap() {
+            const map = document.querySelector('.world-map');
+            const dots = [
+                {left: '35%', top: '40%'}, // London
+                {left: '15%', top: '55%'}, // NYC
+                {left: '70%', top: '45%'}, // Asia
+                {left: '25%', top: '70%'}  // Africa
+            ];
+            
+            dots.forEach(dot => {
+                const d = document.createElement('div');
+                d.className = 'flight-dot';
+                d.style.left = dot.left;
+                d.style.top = dot.top;
+                map.appendChild(d);
+            });
+        }
+        
+        // Admin
+        function showAdmin() {
+            document.getElementById('admin-panel').style.display = 'block';
+            renderAdminAirlines();
+            renderAdminFlights();
+        }
+        
+        function hideAdmin() {
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+        
+        function switchAdminTab(n) {
+            document.querySelectorAll('#admin-airlines, #admin-flights').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('#admin-airlines, #admin-flights')[n].classList.add('active');
+        }
+        
+        function renderAdminAirlines() {
+            const tbody = document.getElementById('admin-airlines-body');
+            tbody.innerHTML = '';
+            airlines.forEach((airline, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><img src="${airline.logo}" width="50"></td>
+                    <td>${airline.name}</td>
+                    <td><a href="${airline.discord}" target="_blank">${airline.discord}</a></td>
+                    <td>
+                        <button onclick="deleteAirline(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function addAirline() {
+            const name = document.getElementById('airline-name').value;
+            const discord = document.getElementById('discord-link').value;
+            const fileInput = document.getElementById('airline-logo');
+            
+            if (!name) return alert("Airline name required");
+            
+            let logoUrl = 'https://via.placeholder.com/80x80/531F70/FFFFFF?text=' + name.substring(0,2);
+            
+            if (fileInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoUrl = e.target.result;
+                    airlines.push({id: Date.now(), name, discord: discord || '#', logo: logoUrl});
+                    renderAdminAirlines();
+                    renderAirlines();
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                airlines.push({id: Date.now(), name, discord: discord || '#', logo: logoUrl});
+                renderAdminAirlines();
+                renderAirlines();
+            }
+            
+            document.getElementById('airline-name').value = '';
+            document.getElementById('discord-link').value = '';
+        }
+        
+        function deleteAirline(index) {
+            if (confirm('Delete airline?')) {
+                airlines.splice(index, 1);
+                renderAdminAirlines();
+                renderAirlines();
+            }
+        }
+        
+        function renderAdminFlights() {
+            const tbody = document.getElementById('admin-flights-body');
+            tbody.innerHTML = '';
+            flights.forEach((flight, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${flight.num}</td>
+                    <td>${flight.dest}</td>
+                    <td>${flight.time}</td>
+                    <td>${flight.status}</td>
+                    <td>
+                        <button onclick="deleteFlight(${index})">Delete</button>
+                        <button onclick="toggleDelay(${index})">Delay/Cancel</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function addFlight() {
+            const num = document.getElementById('flight-num').value;
+            const dest = document.getElementById('flight-dest').value;
+            const time = document.getElementById('flight-time').value;
+            const status = document.getElementById('flight-status').value;
+            
+            if (!num || !dest) return alert("Flight details required");
+            
+            flights.push({
+                id: Date.now(),
+                num,
+                airline: "Custom",
+                dest,
+                time: time || "00:00",
+                status
+            });
+            
+            renderAdminFlights();
+            renderDepartures();
+        }
+        
+        function deleteFlight(index) {
+            if (confirm('Delete flight?')) {
+                flights.splice(index, 1);
+                renderAdminFlights();
+                renderDepartures();
+            }
+        }
+        
+        function toggleDelay(index) {
+            const statuses = ['On Time', 'Delayed', 'Cancelled'];
+            let current = flights[index].status;
+            let nextIndex = (statuses.indexOf(current) + 1) % 3;
+            flights[index].status = statuses[nextIndex];
+            renderAdminFlights();
+            renderDepartures();
+        }
+        
+        // Keyboard shortcut for admin (demo)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+                showAdmin();
+            }
+        });
+        
+        // Init
+        window.onload = function() {
+            navigateTo('home');
+            initMap();
+            renderAirlines();
+            renderDepartures();
+            
+            // Make invisible button visible after 3s for demo
+            setTimeout(() => {
+                document.getElementById('admin-trigger').style.opacity = '0.1';
+            }, 3000);
+            
+            console.log('%cHeathrow PTFS Admin ready. Type / or visit /admin in URL (demo)', 'color:#FFCC00; font-size:16px');
+        };
+    </script>
+</body>
+</html>
